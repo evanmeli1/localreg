@@ -1,0 +1,47 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.green {
+  height: 22px;
+  padding: 0 10px 0 8px;
+  background: var(--green);
+  color: var(--white);
+  font-size: 10px;
+}
+
+.greenSoft {
+  height: 24px;
+  padding: 0 12px 0 10px;
+  background: rgba(29, 138, 76, 0.1);
+  color: var(--green);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.neutral {
+  height: 22px;
+  padding: 0 10px;
+  background: var(--field);
+  color: var(--gray);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.count {
+  height: 22px;
+  min-width: 22px;
+  padding: 0 8px;
+  justify-content: center;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 11px;
+  letter-spacing: 0;
+}

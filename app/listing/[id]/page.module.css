@@ -1,0 +1,91 @@
+.shell {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 18px 20px 64px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray);
+}
+
+.back:hover {
+  color: var(--ink);
+}
+
+.banner {
+  position: relative;
+  height: 140px;
+  margin-top: 14px;
+  border-radius: var(--radius-card);
+}
+
+.bannerBadge {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+}
+
+.name {
+  margin: 16px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.meta {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.card {
+  margin-top: 16px;
+}
+
+.about {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--border);
+}
+
+.rowIcon {
+  flex: none;
+  color: var(--gray);
+}
+
+.rowText {
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--link);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.cta {
+  margin-top: 20px;
+}

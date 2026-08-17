@@ -1,0 +1,75 @@
+:root {
+  --ink: #14151a;
+  --gray: #6b6e76;
+  --bg: #fafafa;
+  --green: #1d8a4c;
+  --red: #e43d30;
+  --white: #ffffff;
+  /* Link blue — borrowed from the Auto category ink so the palette stays closed. */
+  --link: #1d4ed8;
+
+  --border: #efefef;
+  --border-input: #e0e0e0;
+  --border-chip: #e5e5e5;
+  --field: #f2f2f2;
+
+  --radius-card: 12px;
+  --radius-pill: 22px;
+
+  --topbar-h: 60px;
+  --shell: 1240px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Horizontal scrollers (category + chip rows) keep their scroll behavior but
+   hide the scrollbar chrome — desktop users drag or shift-scroll. */
+.scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}

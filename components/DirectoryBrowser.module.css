@@ -1,0 +1,11 @@
+.shell {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 18px 20px 64px;
+}
+
+.chips {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}

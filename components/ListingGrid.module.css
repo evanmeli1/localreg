@@ -1,0 +1,25 @@
+.section {
+  margin-top: 26px;
+}
+
+.heading {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* Desktop-first: fixed 4 columns, no responsive collapse by design. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.empty {
+  margin: 0;
+  padding: 28px 0 40px;
+  font-size: 13px;
+  color: var(--gray);
+}
