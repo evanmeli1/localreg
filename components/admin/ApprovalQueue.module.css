@@ -10,6 +10,10 @@
   gap: 10px;
 }
 
+.headActions {
+  margin-left: auto;
+}
+
 .heading {
   margin: 0;
   font-size: 19px;

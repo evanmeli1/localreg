@@ -1,24 +1,24 @@
-'use client';
-
-import { useState } from 'react';
 import TopBar from '@/components/TopBar';
 import ApprovalQueue from '@/components/admin/ApprovalQueue';
-import PasswordGate from '@/components/admin/PasswordGate';
+import AdminLogin from '@/components/admin/AdminLogin';
+import { getAdminSession } from '@/lib/adminAuth';
 
-export default function AdminPage() {
-  // In-memory only — a refresh re-locks the page. The password is held so the
-  // queue and the approve/reject calls can replay it as a header; see the auth
-  // caveats in lib/admin-api.js. Real session auth replaces this later.
-  const [password, setPassword] = useState(null);
+// Rendered per request so the session cookie is always read fresh.
+export const dynamic = 'force-dynamic';
+
+/**
+ * Server-side gate. The queue component is never sent to the browser at all
+ * unless the session verifies here — this is not a client-side hide, and there
+ * is no flag the browser can set to get past it. A returning admin inside the
+ * 24-hour window skips the login form entirely.
+ */
+export default async function AdminPage() {
+  const session = await getAdminSession();
 
   return (
     <>
       <TopBar />
-      {password ? (
-        <ApprovalQueue password={password} />
-      ) : (
-        <PasswordGate onUnlock={setPassword} />
-      )}
+      {session ? <ApprovalQueue /> : <AdminLogin />}
     </>
   );
 }

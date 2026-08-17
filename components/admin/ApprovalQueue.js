@@ -1,17 +1,23 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { getCategory } from '@/lib/categories';
 import { formatSubmittedDate } from '@/lib/format';
 import styles from './ApprovalQueue.module.css';
 
-export default function ApprovalQueue({ password }) {
+// Authentication is the HttpOnly session cookie, which the browser attaches to
+// these same-origin requests automatically. Nothing about the session is held
+// in component state.
+export default function ApprovalQueue() {
+  const router = useRouter();
   const [pending, setPending] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
@@ -30,10 +36,15 @@ export default function ApprovalQueue({ password }) {
     setLoadError(null);
 
     try {
-      const res = await fetch('/api/admin/listings', {
-        headers: { 'x-admin-password': password },
-        cache: 'no-store',
-      });
+      const res = await fetch('/api/admin/listings', { cache: 'no-store' });
+
+      // Session expired or cleared mid-visit: re-render the server component,
+      // which drops back to the login form rather than showing a broken queue.
+      if (res.status === 401) {
+        router.refresh();
+        return;
+      }
+
       const body = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -47,11 +58,25 @@ export default function ApprovalQueue({ password }) {
     }
 
     setLoading(false);
-  }, [password]);
+  }, [router]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('[admin] logout failed', err);
+    }
+    // Refresh either way: if the cookie did clear, the server component now
+    // renders the login form.
+    router.refresh();
+    setLoggingOut(false);
+  }
 
   async function decide(submission, decision) {
     if (busyId) return;
@@ -60,12 +85,15 @@ export default function ApprovalQueue({ password }) {
     try {
       const res = await fetch(`/api/admin/${decision}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': password,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: submission.id }),
       });
+
+      if (res.status === 401) {
+        router.refresh();
+        return;
+      }
+
       const body = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -95,6 +123,12 @@ export default function ApprovalQueue({ password }) {
       <div className={styles.head}>
         <h1 className={styles.heading}>Pending approvals</h1>
         {!loading && !loadError && <Badge variant="count">{pending.length}</Badge>}
+
+        <div className={styles.headActions}>
+          <Button variant="quiet" onClick={logout} disabled={loggingOut}>
+            {loggingOut ? 'Logging out…' : 'Log out'}
+          </Button>
+        </div>
       </div>
 
       {loading ? (

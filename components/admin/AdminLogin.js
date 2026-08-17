@@ -1,19 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { IconLock } from '@tabler/icons-react';
 import Button from '@/components/ui/Button';
 import { Field, TextInput } from '@/components/ui/Field';
 import styles from './PasswordGate.module.css';
 
-// The password itself lives in the ADMIN_PASSWORD env var and is checked
-// server-side by /api/admin/auth, so it never reaches the client bundle.
-//
-// ⚠️ Still a placeholder: there is no session, so the password is held in
-// memory and replayed on every admin request. Replace with real session-based
-// auth before launch — see the note in lib/admin-api.js.
-
-export default function PasswordGate({ onUnlock }) {
+/**
+ * Posts to /api/admin/login. On success the server sets an HttpOnly cookie —
+ * nothing is stored here, and nothing is kept in localStorage or component
+ * state. router.refresh() then re-runs the /admin server component, which sees
+ * the new cookie and renders the queue.
+ */
+export default function AdminLogin() {
+  const router = useRouter();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
@@ -26,21 +27,31 @@ export default function PasswordGate({ onUnlock }) {
     setError('');
 
     try {
-      const res = await fetch('/api/admin/auth', {
+      const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
 
       if (res.ok) {
-        onUnlock(password);
+        setPassword('');
+        router.refresh();
         return;
       }
 
       const body = await res.json().catch(() => ({}));
-      setError(body.error || 'Incorrect password.');
+      if (res.status === 429) {
+        const retry = res.headers.get('Retry-After');
+        setError(
+          retry
+            ? `Too many attempts. Try again in ${Math.ceil(Number(retry) / 60)} min.`
+            : 'Too many attempts. Try again later.',
+        );
+      } else {
+        setError(body.error || 'Invalid password');
+      }
     } catch (err) {
-      console.error('[admin] auth request failed', err);
+      console.error('[admin] login request failed', err);
       setError('Could not reach the server. Please try again.');
     }
 
@@ -55,7 +66,7 @@ export default function PasswordGate({ onUnlock }) {
         </span>
 
         <h1 className={styles.heading}>Admin access</h1>
-        <p className={styles.sub}>Enter the admin password to view the queue.</p>
+        <p className={styles.sub}>Sign in to review the approval queue.</p>
 
         <div className={styles.form}>
           <Field label="Password" htmlFor="password" error={error}>
@@ -75,7 +86,7 @@ export default function PasswordGate({ onUnlock }) {
           </Field>
 
           <Button type="submit" size="lg" fullWidth disabled={checking}>
-            {checking ? 'Checking…' : 'Enter'}
+            {checking ? 'Signing in…' : 'Sign in'}
           </Button>
         </div>
       </form>
