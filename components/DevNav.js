@@ -13,7 +13,8 @@ import styles from './DevNav.module.css';
 // so there's no static URL to link here.
 const ROUTES = [
   { href: '/', label: 'Directory' },
-  { href: '/welcome?session_id=test123', label: 'Welcome / intake' },
+  // Reachable only with a real paid Stripe session now; this shows the gate.
+  { href: '/welcome', label: 'Welcome / intake (gated)' },
   { href: '/admin', label: 'Admin queue' },
   { href: '/request-change', label: 'Change request' },
 ];

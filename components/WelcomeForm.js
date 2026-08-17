@@ -36,6 +36,11 @@ export default function WelcomeForm() {
   const [submitError, setSubmitError] = useState(null);
   const [submittedEmail, setSubmittedEmail] = useState(null);
 
+  // The session_id in the URL is untrusted input. Until the server confirms it
+  // is a real, paid, unused Checkout Session, no form is rendered.
+  const [verifyState, setVerifyState] = useState(sessionId ? 'checking' : 'gate');
+  const [customerId, setCustomerId] = useState(null);
+
   const fileInputRef = useRef(null);
   // Mirror of the live preview URL. Kept in a ref (written only from handlers)
   // so unmount can revoke it — a [photo]-keyed effect would revoke too early
@@ -47,6 +52,40 @@ export default function WelcomeForm() {
       if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+
+    fetch('/api/checkout/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId }),
+    })
+      .then((res) => res.json())
+      .then((body) => {
+        if (cancelled) return;
+        if (body.status === 'ok') {
+          setCustomerId(body.customerId);
+          setVerifyState('ok');
+        } else if (body.status === 'already_submitted') {
+          setVerifyState('already');
+        } else if (body.status === 'unavailable') {
+          setVerifyState('unavailable');
+        } else {
+          // invalid or unpaid — both mean "no completed payment here".
+          setVerifyState('gate');
+        }
+      })
+      .catch((err) => {
+        console.error('[welcome] session verification failed', err);
+        if (!cancelled) setVerifyState('unavailable');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
 
   function setValue(key, value) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -140,10 +179,9 @@ export default function WelcomeForm() {
         description: values.description.trim(),
         photo_url: photoUrl,
         stripe_session_id: sessionId,
-        // Checkout will supply the real customer id. Deriving it from the
-        // session keeps the NOT NULL + UNIQUE constraint meaningful in the
-        // meantime, and keeps one payment tied to one listing.
-        stripe_customer_id: `pending_${sessionId}`,
+        // The real Stripe customer id, returned by the verification step. This
+        // is the key every subscription/dispute/payment webhook looks up on.
+        stripe_customer_id: customerId,
       });
 
       if (error) {
@@ -187,8 +225,20 @@ export default function WelcomeForm() {
     );
   }
 
-  // No session_id means they reached this page without going through payment.
-  if (!sessionId) {
+  if (verifyState === 'checking') {
+    return (
+      <FormPage>
+        <div className={styles.gate}>
+          <p className={styles.gateText}>Checking your payment…</p>
+        </div>
+      </FormPage>
+    );
+  }
+
+  // Missing, fabricated, unknown or unpaid session — all land here, and
+  // deliberately give the same message so the page can't be used to probe
+  // which session ids exist.
+  if (verifyState === 'gate') {
     return (
       <FormPage>
         <div className={styles.gate}>
@@ -199,9 +249,49 @@ export default function WelcomeForm() {
             It looks like you haven&apos;t completed payment yet
           </h1>
           <p className={styles.gateText}>
-            This form opens automatically once your subscription is set up. In a
-            later phase this page will link straight to Stripe Checkout — until
-            then there&apos;s nothing to submit against.
+            This form opens automatically once your subscription is set up. Start
+            from &ldquo;List your business&rdquo; and we&apos;ll bring you back
+            here as soon as payment goes through.
+          </p>
+          <Button href="/" variant="quiet" className={styles.gateCta}>
+            Back to directory
+          </Button>
+        </div>
+      </FormPage>
+    );
+  }
+
+  if (verifyState === 'already') {
+    return (
+      <FormPage>
+        <div className={styles.gate}>
+          <span className={styles.gateIcon}>
+            <IconCheck size={20} stroke={2.5} />
+          </span>
+          <h1 className={styles.gateHeading}>You&apos;ve already submitted</h1>
+          <p className={styles.gateText}>
+            We have your listing for this payment and it&apos;s in the review
+            queue. You&apos;ll get an email once it&apos;s approved and live.
+          </p>
+          <Button href="/" variant="quiet" className={styles.gateCta}>
+            Back to directory
+          </Button>
+        </div>
+      </FormPage>
+    );
+  }
+
+  if (verifyState === 'unavailable') {
+    return (
+      <FormPage>
+        <div className={styles.gate}>
+          <span className={styles.gateIcon}>
+            <IconLock size={20} stroke={1.75} />
+          </span>
+          <h1 className={styles.gateHeading}>We couldn&apos;t check your payment</h1>
+          <p className={styles.gateText}>
+            Something went wrong on our end — your payment is safe. Please
+            refresh in a moment, and email us if it keeps happening.
           </p>
           <Button href="/" variant="quiet" className={styles.gateCta}>
             Back to directory

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { IconMenu2, IconSearch } from '@tabler/icons-react';
+import ListYourBusinessButton from './ListYourBusinessButton';
 import styles from './TopBar.module.css';
 
 /**
@@ -49,11 +50,8 @@ export default function TopBar({ query, onQueryChange }) {
             <span className={styles.disabledLabel}>Manage listing</span>
           </span>
 
-          {/* TODO: temporary. This should open Stripe Checkout and only land on
-              /welcome after payment succeeds. */}
-          <Link href="/welcome" className={styles.cta}>
-            List your business
-          </Link>
+          {/* Opens Stripe Checkout; /welcome is reached only after payment. */}
+          <ListYourBusinessButton />
         </nav>
       </div>
     </header>

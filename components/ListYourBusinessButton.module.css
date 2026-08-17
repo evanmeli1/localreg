@@ -1,0 +1,49 @@
+.wrap {
+  position: relative;
+  flex: none;
+}
+
+/* Matches the pill CTA the top bar used when this was a plain link. */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 120ms ease;
+}
+
+.cta:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.cta:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Floats beneath the bar so adding an error never shifts the layout. */
+.error {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  margin: 0;
+  padding: 8px 12px;
+  max-width: 280px;
+  border: 1px solid var(--red);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  box-shadow: 0 6px 18px rgba(20, 21, 26, 0.1);
+}
