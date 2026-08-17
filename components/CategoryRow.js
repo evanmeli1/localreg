@@ -5,6 +5,7 @@ import {
   IconCar,
   IconCoffee,
   IconFlower,
+  IconGridDots,
   IconShoppingBag,
 } from '@tabler/icons-react';
 import { CATEGORIES } from '@/lib/categories';
@@ -16,6 +17,7 @@ const ICONS = {
   bag: IconShoppingBag,
   flower: IconFlower,
   briefcase: IconBriefcase,
+  grid: IconGridDots,
 };
 
 export default function CategoryRow({ selectedId, onSelect }) {

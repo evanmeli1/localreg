@@ -41,6 +41,15 @@ export default function DirectoryBrowser() {
 
   const category = getCategory(categoryId);
 
+  // "Other" holds free-text subcategories, so its chips come from the live
+  // listings themselves rather than a fixed list. Empty until one exists.
+  const otherSubcategories = useMemo(() => {
+    const seen = new Set(
+      listings.filter((l) => l.categoryId === 'other').map((l) => l.subcategory),
+    );
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  }, [listings]);
+
   function handleSelectCategory(nextId) {
     setCategoryId(nextId);
     // Every category change drops back to its "All ..." chip.
@@ -87,6 +96,7 @@ export default function DirectoryBrowser() {
               category={category}
               selected={subcategory}
               onSelect={setSubcategory}
+              subcategories={category.id === 'other' ? otherSubcategories : undefined}
             />
           </div>
         )}

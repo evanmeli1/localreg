@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Toast, { useToast, useRapidClickGuard } from '@/components/ui/Toast';
 import styles from './ListYourBusinessButton.module.css';
 
 /**
@@ -11,14 +12,29 @@ import styles from './ListYourBusinessButton.module.css';
 export default function ListYourBusinessButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { toast, showTooFast } = useToast();
+  const isRapidClicking = useRapidClickGuard();
 
   async function startCheckout() {
+    // Disabled-on-click already prevents the common double-click; this also
+    // catches someone hammering the button between responses.
     if (loading) return;
+    if (isRapidClicking()) {
+      showTooFast();
+      return;
+    }
     setLoading(true);
     setError(null);
 
     try {
       const res = await fetch('/api/checkout', { method: 'POST' });
+
+      if (res.status === 429) {
+        showTooFast();
+        setLoading(false);
+        return;
+      }
+
       const body = await res.json().catch(() => ({}));
 
       if (!res.ok || !body.url) {
@@ -55,6 +71,8 @@ export default function ListYourBusinessButton() {
           {error}
         </p>
       )}
+
+      <Toast toast={toast} />
     </div>
   );
 }

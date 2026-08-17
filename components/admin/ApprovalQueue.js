@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { getCategory } from '@/lib/categories';
 import { formatSubmittedDate } from '@/lib/format';
+import Toast, { useToast } from '@/components/ui/Toast';
 import styles from './ApprovalQueue.module.css';
 
 // Authentication is the HttpOnly session cookie, which the browser attaches to
@@ -18,18 +19,8 @@ export default function ApprovalQueue() {
   const [loadError, setLoadError] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-
-  useEffect(() => {
-    return () => clearTimeout(toastTimer.current);
-  }, []);
-
-  const showToast = useCallback((message, tone) => {
-    clearTimeout(toastTimer.current);
-    setToast({ message, tone });
-    toastTimer.current = setTimeout(() => setToast(null), 3200);
-  }, []);
+  // Shared toast implementation — see components/ui/Toast.js.
+  const { toast, showToast, showTooFast } = useToast();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,6 +86,12 @@ export default function ApprovalQueue() {
       }
 
       const body = await res.json().catch(() => ({}));
+
+      if (res.status === 429) {
+        showTooFast();
+        setBusyId(null);
+        return;
+      }
 
       if (!res.ok) {
         showToast(body.error || `Could not ${decision} ${submission.name}`, 'red');
@@ -187,14 +184,7 @@ export default function ApprovalQueue() {
         </div>
       )}
 
-      {toast && (
-        <div
-          className={`${styles.toast} ${toast.tone === 'red' ? styles.toastRed : styles.toastGreen}`}
-          role="status"
-        >
-          {toast.message}
-        </div>
-      )}
+      <Toast toast={toast} />
     </main>
   );
 }

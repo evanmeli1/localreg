@@ -9,6 +9,7 @@ import TopBar from '@/components/TopBar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import PhotoGallery from '@/components/PhotoGallery';
 import { getCategory } from '@/lib/categories';
 import { fetchLiveListingById } from '@/lib/businesses';
 import { formatListedSince } from '@/lib/format';
@@ -47,23 +48,21 @@ export default async function ListingPage({ params }) {
           Back to {category ? category.label : 'directory'}
         </Link>
 
-        <div
-          className={styles.banner}
-          style={
-            listing.photoUrl
-              ? {
-                  backgroundImage: `url(${listing.photoUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }
-              : { background: gradientFor(index) }
-          }
-        >
-          <Badge className={styles.bannerBadge}>
-            <IconCheck size={12} stroke={3} />
-            VERIFIED LISTING
-          </Badge>
-        </div>
+        {listing.photoUrls.length > 0 ? (
+          <PhotoGallery photos={listing.photoUrls} name={listing.name}>
+            <Badge className={styles.bannerBadge}>
+              <IconCheck size={12} stroke={3} />
+              VERIFIED LISTING
+            </Badge>
+          </PhotoGallery>
+        ) : (
+          <div className={styles.banner} style={{ background: gradientFor(index) }}>
+            <Badge className={styles.bannerBadge}>
+              <IconCheck size={12} stroke={3} />
+              VERIFIED LISTING
+            </Badge>
+          </div>
+        )}
 
         <h1 className={styles.name}>{listing.name}</h1>
         <p className={styles.meta}>

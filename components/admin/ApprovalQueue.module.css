@@ -122,27 +122,3 @@
   color: var(--gray);
 }
 
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: 28px;
-  transform: translateX(-50%);
-  z-index: 60;
-  display: inline-flex;
-  align-items: center;
-  height: 38px;
-  padding: 0 18px;
-  border-radius: var(--radius-pill);
-  color: var(--white);
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 6px 20px rgba(20, 21, 26, 0.18);
-}
-
-.toastGreen {
-  background: var(--green);
-}
-
-.toastRed {
-  background: var(--red);
-}

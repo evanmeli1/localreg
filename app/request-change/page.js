@@ -4,7 +4,8 @@ import { useState } from 'react';
 import FormPage, { FormHeading, Submitted } from '@/components/FormPage';
 import Button from '@/components/ui/Button';
 import { Field, Textarea, TextInput } from '@/components/ui/Field';
-import { supabase, isSupabaseConfigured, describeError } from '@/lib/supabase';
+import Toast, { useToast, useRapidClickGuard } from '@/components/ui/Toast';
+import { LIMITS } from '@/lib/validation';
 import styles from './page.module.css';
 
 export default function RequestChangePage() {
@@ -14,10 +15,18 @@ export default function RequestChangePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [sent, setSent] = useState(false);
+  const { toast, showTooFast } = useToast();
+  const isRapidClicking = useRapidClickGuard();
 
   async function handleSubmit(event) {
     event.preventDefault();
+    // Disabling on first click stops double-submission independently of the
+    // server's rate limiter.
     if (submitting) return;
+    if (isRapidClicking()) {
+      showTooFast();
+      return;
+    }
 
     const next = {};
     if (!identifier.trim()) next.identifier = 'Tell us which listing this is.';
@@ -25,41 +34,47 @@ export default function RequestChangePage() {
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
-    if (!isSupabaseConfigured) {
-      setSubmitError('The database is not configured yet. Please try again later.');
-      return;
-    }
-
     setSubmitting(true);
     setSubmitError(null);
 
-    // change_requests is insert-only for anon under RLS — nothing is read back,
-    // so the id is generated here (a RETURNING clause would be blocked).
-    const requestId = crypto.randomUUID();
+    try {
+      // Server route validates, rate limits, inserts and notifies. The browser
+      // no longer writes to the database directly.
+      const res = await fetch('/api/change-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: identifier.trim(),
+          request_details: change.trim(),
+        }),
+      });
 
-    const { error } = await supabase.from('change_requests').insert({
-      id: requestId,
-      identifier: identifier.trim(),
-      request_details: change.trim(),
-    });
+      if (res.status === 429) {
+        showTooFast();
+        setSubmitting(false);
+        return;
+      }
 
-    if (error) {
-      setSubmitError(describeError(error, 'Could not send your request. Please try again.'));
+      const payload = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (payload.errors) {
+          setErrors({
+            identifier: payload.errors.identifier,
+            change: payload.errors.request_details,
+          });
+        }
+        setSubmitError(payload.error || 'Could not send your request. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      setSent(true);
+    } catch (err) {
+      console.error('[request-change] submission failed', err);
+      setSubmitError('Could not reach the server. Please try again.');
       setSubmitting(false);
-      return;
     }
-
-    // Discord notification. The webhook URL is a server-side secret, so this
-    // goes through an API route, which rebuilds the message from the stored
-    // row. Best-effort: a failed notification must not cost the user their
-    // request, so it is logged and swallowed.
-    fetch('/api/notify/change-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: requestId }),
-    }).catch((err) => console.error('[request-change] notification failed', err));
-
-    setSent(true);
   }
 
   if (sent) {
@@ -103,11 +118,13 @@ export default function RequestChangePage() {
           label="What would you like changed?"
           htmlFor="change"
           error={errors.change}
+          counter={`${change.length}/${LIMITS.requestDetails.max}`}
         >
           <Textarea
             id="change"
             name="change"
             rows={4}
+            maxLength={LIMITS.requestDetails.max}
             value={change}
             invalid={Boolean(errors.change)}
             onChange={(e) => {
@@ -130,6 +147,8 @@ export default function RequestChangePage() {
           {submitting ? 'Sending…' : 'Send request'}
         </Button>
       </form>
+
+      <Toast toast={toast} />
     </FormPage>
   );
 }

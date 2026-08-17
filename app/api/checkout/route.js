@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,12 @@ export const dynamic = 'force-dynamic';
  * the real session id on redirect. /welcome then verifies that id server-side
  * before showing the intake form — the id in the URL is never trusted on its own.
  */
-export async function POST() {
+export async function POST(request) {
+  // Each call creates a real Stripe object, so this is capped even though it
+  // needs no authentication.
+  const limited = enforceRateLimit('checkout', request);
+  if (limited) return limited;
+
   if (!isStripeConfigured) {
     console.error('[checkout] STRIPE_SECRET_KEY or STRIPE_PRICE_ID missing');
     return NextResponse.json(

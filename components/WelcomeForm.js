@@ -2,17 +2,36 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { IconCheck, IconLock, IconPhoto, IconUpload, IconX } from '@tabler/icons-react';
+import { IconCheck, IconLock, IconUpload, IconX } from '@tabler/icons-react';
 import FormPage, { FormHeading, Submitted } from '@/components/FormPage';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { Field, Select, Textarea, TextInput } from '@/components/ui/Field';
-import { CATEGORIES, subcategoriesFor } from '@/lib/categories';
-import { supabase, isSupabaseConfigured, describeError } from '@/lib/supabase';
+import { CATEGORIES, subcategoriesFor, usesFreeTextSubcategory } from '@/lib/categories';
+import { LIMITS } from '@/lib/validation';
+import Toast, { useToast, useRapidClickGuard } from '@/components/ui/Toast';
 import styles from '@/app/welcome/page.module.css';
 
-const MAX_DESCRIPTION = 160;
-const PHOTO_BUCKET = 'business-photos';
+const MAX_DESCRIPTION = LIMITS.description.max;
+
+/** Server field names -> the form's own field names. */
+const SERVER_FIELD_MAP = {
+  name: 'name',
+  category: 'categoryId',
+  subcategory: 'subcategory',
+  website: 'website',
+  contact_email: 'email',
+  description: 'description',
+  photos: 'photos',
+};
+
+function mapServerErrors(serverErrors) {
+  const mapped = {};
+  for (const [field, message] of Object.entries(serverErrors)) {
+    mapped[SERVER_FIELD_MAP[field] ?? field] = message;
+  }
+  return mapped;
+}
 
 const EMPTY = {
   name: '',
@@ -30,7 +49,7 @@ export default function WelcomeForm() {
 
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
-  const [photo, setPhoto] = useState(null); // { file, url }
+  const [photos, setPhotos] = useState([]); // [{ id, file, url }]
   const [dragging, setDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -42,14 +61,16 @@ export default function WelcomeForm() {
   const [customerId, setCustomerId] = useState(null);
 
   const fileInputRef = useRef(null);
-  // Mirror of the live preview URL. Kept in a ref (written only from handlers)
-  // so unmount can revoke it — a [photo]-keyed effect would revoke too early
-  // under StrictMode's double-invoked effects and blank the preview.
-  const photoUrlRef = useRef(null);
+  // Mirror of the live preview URLs. Kept in a ref (written only from handlers)
+  // so unmount can revoke them — a [photos]-keyed effect would revoke too early
+  // under StrictMode's double-invoked effects and blank the previews.
+  const photoUrlsRef = useRef([]);
+  const { toast, showToast, showTooFast } = useToast();
+  const isRapidClicking = useRapidClickGuard();
 
   useEffect(() => {
     return () => {
-      if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
+      photoUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
 
@@ -98,19 +119,43 @@ export default function WelcomeForm() {
     setErrors((prev) => ({ ...prev, categoryId: undefined, subcategory: undefined }));
   }
 
-  function selectFile(file) {
-    if (!file || !file.type.startsWith('image/')) return;
-    if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
-    const url = URL.createObjectURL(file);
-    photoUrlRef.current = url;
-    setPhoto({ file, url });
+  function addFiles(fileList) {
+    const incoming = Array.from(fileList ?? []).filter((f) => f && f.type.startsWith('image/'));
+    if (incoming.length === 0) return;
+
+    setPhotos((prev) => {
+      const room = LIMITS.photoCount - prev.length;
+      if (room <= 0) {
+        showToast(`You can upload up to ${LIMITS.photoCount} photos.`, 'red');
+        return prev;
+      }
+      if (incoming.length > room) {
+        showToast(`Only ${LIMITS.photoCount} photos allowed — extras were skipped.`, 'red');
+      }
+
+      const added = incoming.slice(0, room).map((file) => {
+        const url = URL.createObjectURL(file);
+        photoUrlsRef.current.push(url);
+        return { id: crypto.randomUUID(), file, url };
+      });
+      return [...prev, ...added];
+    });
+
+    setErrors((prev) => ({ ...prev, photos: undefined }));
+    // Reset so re-picking the same file still fires a change event.
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  function clearPhoto() {
-    if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
-    photoUrlRef.current = null;
-    setPhoto(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  /** Removes one photo before submit; it is never uploaded. */
+  function removePhoto(id) {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) {
+        URL.revokeObjectURL(target.url);
+        photoUrlsRef.current = photoUrlsRef.current.filter((u) => u !== target.url);
+      }
+      return prev.filter((p) => p.id !== id);
+    });
   }
 
   function validate() {
@@ -124,92 +169,74 @@ export default function WelcomeForm() {
     } else if (!/^\S+@\S+\.\S+$/.test(values.email.trim())) {
       next.email = 'Enter a valid email address.';
     }
-    if (!values.description.trim()) next.description = 'Add a short description.';
-    return next;
-  }
-
-  /** Uploads to the public bucket and returns its public URL, or null. */
-  async function uploadPhoto() {
-    const safeName = photo.file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const path = `${sessionId}/${Date.now()}-${safeName}`;
-
-    const { error } = await supabase.storage
-      .from(PHOTO_BUCKET)
-      .upload(path, photo.file, { cacheControl: '3600', upsert: false });
-
-    if (error) {
-      console.error('[welcome] photo upload failed', error);
-      return null; // Non-fatal: the listing still submits, minus the photo.
+    // Mirrors lib/validation.js so the user gets the same answer before a
+    // round trip. The server remains the authority.
+    const description = values.description.trim();
+    if (!description) next.description = 'Add a short description.';
+    else if (description.length < LIMITS.description.min) {
+      next.description = `Description must be at least ${LIMITS.description.min} characters.`;
     }
-
-    return supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+    if (values.name.trim() && values.name.trim().length < LIMITS.name.min) {
+      next.name = `Business name must be at least ${LIMITS.name.min} characters.`;
+    }
+    return next;
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
+    // Guard against double-submission from a double-click as its own bug
+    // class, independent of the server's rate limiter.
     if (submitting) return;
+    if (isRapidClicking()) {
+      showTooFast();
+      return;
+    }
 
     const next = validate();
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
-    if (!isSupabaseConfigured) {
-      setSubmitError('The database is not configured yet. Please try again later.');
-      return;
-    }
-
     setSubmitting(true);
     setSubmitError(null);
 
     try {
-      const photoUrl = photo ? await uploadPhoto() : null;
+      // Multipart so the photo travels with the fields; the server validates
+      // both, uploads under a generated filename, and does the insert. Nothing
+      // is written straight from the browser any more.
+      const body = new FormData();
+      body.set('session_id', sessionId);
+      body.set('name', values.name.trim());
+      body.set('category', values.categoryId);
+      body.set('subcategory', values.subcategory);
+      body.set('website', values.website.trim());
+      body.set('contact_email', values.email.trim());
+      body.set('description', values.description.trim());
+      photos.forEach((p) => body.append('photos', p.file, p.file.name));
 
-      // The id is generated here rather than read back from the insert: the
-      // SELECT policy only exposes 'live' rows, so a RETURNING clause on a
-      // fresh 'pending' row would be blocked by RLS.
-      const businessId = crypto.randomUUID();
+      const res = await fetch('/api/submissions', { method: 'POST', body });
+      const payload = await res.json().catch(() => ({}));
 
-      const { error } = await supabase.from('businesses').insert({
-        id: businessId,
-        name: values.name.trim(),
-        category: values.categoryId,
-        subcategory: values.subcategory,
-        website: values.website.trim(),
-        contact_email: values.email.trim(),
-        description: values.description.trim(),
-        photo_url: photoUrl,
-        stripe_session_id: sessionId,
-        // The real Stripe customer id, returned by the verification step. This
-        // is the key every subscription/dispute/payment webhook looks up on.
-        stripe_customer_id: customerId,
-      });
-
-      if (error) {
-        // 23505 = unique_violation on stripe_session_id / stripe_customer_id.
-        if (error.code === '23505') {
-          setSubmitError("You've already submitted for this payment.");
-        } else {
-          setSubmitError(describeError(error, 'Could not submit your listing. Please try again.'));
-        }
+      if (res.status === 429) {
+        showTooFast();
         setSubmitting(false);
         return;
       }
 
-      // Audit log. `events` is service-role only under RLS, so it goes through
-      // a server route rather than the anon client. A failure here must not
-      // cost the user their submission, so it is logged and swallowed.
-      fetch('/api/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'submission_created',
-          business_id: businessId,
-        }),
-      }).catch((err) => console.error('[welcome] event log failed', err));
+      if (!res.ok) {
+        // Surface the server's per-field messages on the fields themselves so
+        // the user can see which input to fix.
+        if (payload.errors) {
+          setErrors(mapServerErrors(payload.errors));
+        }
+        setSubmitError(payload.error || 'Could not submit your listing. Please try again.');
+        setSubmitting(false);
+        return;
+      }
 
       setSubmittedEmail(values.email.trim());
     } catch (err) {
-      setSubmitError(describeError(err, 'Could not submit your listing. Please try again.'));
+      console.error('[welcome] submission failed', err);
+      setSubmitError('Could not reach the server. Please try again.');
       setSubmitting(false);
     }
   }
@@ -302,6 +329,7 @@ export default function WelcomeForm() {
   }
 
   const subcategories = subcategoriesFor(values.categoryId);
+  const freeTextSubcategory = usesFreeTextSubcategory(values.categoryId);
 
   return (
     <FormPage>
@@ -344,28 +372,49 @@ export default function WelcomeForm() {
           </Select>
         </Field>
 
-        <Field
-          label="Subcategory"
-          htmlFor="subcategory"
-          error={errors.subcategory}
-          helper={!values.categoryId ? 'Pick a category first.' : undefined}
-        >
-          <Select
-            id="subcategory"
-            name="subcategory"
-            value={values.subcategory}
-            disabled={!values.categoryId}
-            invalid={Boolean(errors.subcategory)}
-            onChange={(e) => setValue('subcategory', e.target.value)}
+        {freeTextSubcategory ? (
+          // "Other" has no fixed list, so the business describes itself.
+          <Field
+            label="Describe your category"
+            htmlFor="subcategory"
+            error={errors.subcategory}
+            helper="e.g. Pet grooming, Event planning"
+            counter={`${values.subcategory.length}/${LIMITS.freeTextSubcategory.max}`}
           >
-            <option value="">Choose a subcategory</option>
-            {subcategories.map((sub) => (
-              <option key={sub} value={sub}>
-                {sub}
-              </option>
-            ))}
-          </Select>
-        </Field>
+            <TextInput
+              id="subcategory"
+              name="subcategory"
+              value={values.subcategory}
+              maxLength={LIMITS.freeTextSubcategory.max}
+              invalid={Boolean(errors.subcategory)}
+              onChange={(e) => setValue('subcategory', e.target.value)}
+              placeholder="Pet grooming"
+            />
+          </Field>
+        ) : (
+          <Field
+            label="Subcategory"
+            htmlFor="subcategory"
+            error={errors.subcategory}
+            helper={!values.categoryId ? 'Pick a category first.' : undefined}
+          >
+            <Select
+              id="subcategory"
+              name="subcategory"
+              value={values.subcategory}
+              disabled={!values.categoryId}
+              invalid={Boolean(errors.subcategory)}
+              onChange={(e) => setValue('subcategory', e.target.value)}
+            >
+              <option value="">Choose a subcategory</option>
+              {subcategories.map((sub) => (
+                <option key={sub} value={sub}>
+                  {sub}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
 
         <Field label="Website" htmlFor="website" error={errors.website}>
           <TextInput
@@ -413,42 +462,49 @@ export default function WelcomeForm() {
           />
         </Field>
 
-        <Field label="Photo" htmlFor="photo" optional>
+        <Field
+          label="Photos"
+          htmlFor="photos"
+          optional
+          error={errors.photos}
+          counter={photos.length > 0 ? `${photos.length}/${LIMITS.photoCount}` : undefined}
+        >
           <input
             ref={fileInputRef}
-            id="photo"
-            name="photo"
+            id="photos"
+            name="photos"
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
             className={styles.fileInput}
-            onChange={(e) => selectFile(e.target.files?.[0])}
+            onChange={(e) => addFiles(e.target.files)}
           />
 
-          {photo ? (
-            <div className={styles.preview}>
-              {/* Local object URL, never uploaded — next/image would be overkill. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt="" className={styles.thumb} />
-              <div className={styles.previewMeta}>
-                <span className={styles.previewName}>{photo.file.name}</span>
-                <span className={styles.previewHint}>
-                  <IconPhoto size={12} stroke={1.75} />
-                  Ready to upload
-                </span>
-              </div>
-              <button
-                type="button"
-                className={styles.previewClear}
-                onClick={clearPhoto}
-                aria-label="Remove photo"
-              >
-                <IconX size={15} stroke={2} />
-              </button>
-            </div>
-          ) : (
+          {photos.length > 0 && (
+            <ul className={styles.thumbGrid}>
+              {photos.map((p, i) => (
+                <li key={p.id} className={styles.thumbItem}>
+                  {/* Local object URL, never uploaded — next/image would be overkill. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.url} alt={`Photo ${i + 1}: ${p.file.name}`} className={styles.thumbImg} />
+                  <button
+                    type="button"
+                    className={styles.thumbRemove}
+                    onClick={() => removePhoto(p.id)}
+                    aria-label={`Remove ${p.file.name}`}
+                  >
+                    <IconX size={13} stroke={2.5} />
+                  </button>
+                  {i === 0 && <span className={styles.thumbBadge}>Cover</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {photos.length < LIMITS.photoCount && (
             <button
               type="button"
-              className={`${styles.dropzone} ${dragging ? styles.dropzoneActive : ''}`}
+              className={`${styles.dropzone} ${dragging ? styles.dropzoneActive : ''} ${photos.length > 0 ? styles.dropzoneCompact : ''}`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => {
                 e.preventDefault();
@@ -458,16 +514,20 @@ export default function WelcomeForm() {
               onDrop={(e) => {
                 e.preventDefault();
                 setDragging(false);
-                selectFile(e.dataTransfer.files?.[0]);
+                addFiles(e.dataTransfer.files);
               }}
             >
-              <IconUpload size={20} stroke={1.75} className={styles.dropIcon} />
+              <IconUpload size={photos.length > 0 ? 16 : 20} stroke={1.75} className={styles.dropIcon} />
               <span className={styles.dropText}>
-                Drag a photo here, or tap to browse
+                {photos.length > 0
+                  ? `Add more (${LIMITS.photoCount - photos.length} left)`
+                  : 'Drag photos here, or tap to browse'}
               </span>
-              <span className={styles.dropHint}>
-                No photo? We&apos;ll use a placeholder for now.
-              </span>
+              {photos.length === 0 && (
+                <span className={styles.dropHint}>
+                  Up to {LIMITS.photoCount}. No photo? We&apos;ll use a placeholder.
+                </span>
+              )}
             </button>
           )}
         </Field>
@@ -488,6 +548,8 @@ export default function WelcomeForm() {
           You&apos;ll get an email once it&apos;s approved and live.
         </p>
       </form>
+
+      <Toast toast={toast} />
     </FormPage>
   );
 }

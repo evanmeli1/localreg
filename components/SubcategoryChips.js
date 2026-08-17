@@ -4,12 +4,17 @@ import styles from './SubcategoryChips.module.css';
 
 export const ALL = '__all__';
 
-export default function SubcategoryChips({ category, selected, onSelect }) {
+/**
+ * `subcategories` overrides the taxonomy list — used by "Other", whose values
+ * are free text and so are derived from live listings rather than fixed.
+ */
+export default function SubcategoryChips({ category, selected, onSelect, subcategories }) {
   if (!category) return null;
 
+  const options = subcategories ?? category.subcategories;
   const chips = [
     { value: ALL, label: `All ${category.label}` },
-    ...category.subcategories.map((s) => ({ value: s, label: s })),
+    ...options.map((s) => ({ value: s, label: s })),
   ];
 
   return (
