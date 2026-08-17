@@ -1,0 +1,107 @@
+/* Photo picker styling, moved verbatim out of app/welcome/page.module.css when
+   the change request form started using the same control. */
+
+.fileInput {
+  display: none;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 20px 16px;
+  border: 1px dashed var(--border-input);
+  border-radius: 10px;
+  background: var(--white);
+  text-align: center;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.dropzone:hover,
+.dropzoneActive {
+  border-color: var(--ink);
+  background: var(--bg);
+}
+
+.dropzoneCompact {
+  padding: 10px 12px;
+}
+
+.dropIcon {
+  color: var(--gray);
+  margin-bottom: 2px;
+}
+
+.dropText {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.dropHint {
+  font-size: 11px;
+  color: var(--gray);
+}
+
+/* Multi-photo previews */
+.thumbGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.thumbItem {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--field);
+  border: 1px solid var(--border-input);
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbRemove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(20, 21, 26, 0.72);
+  color: var(--white);
+}
+
+.thumbRemove:hover {
+  background: var(--red);
+}
+
+.thumbBadge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1px 0;
+  background: rgba(20, 21, 26, 0.72);
+  color: var(--white);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}

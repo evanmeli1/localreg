@@ -88,52 +88,8 @@
   flex: none;
 }
 
-.textLink {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray);
-}
-
-.textLink:hover {
-  color: var(--ink);
-}
-
-/* "Manage listing" until the Stripe portal exists: visible but inert. */
-.textLinkDisabled {
-  position: relative;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray);
-  cursor: default;
-  user-select: none;
-}
-
-.disabledLabel {
-  opacity: 0.45;
-}
-
-.textLinkDisabled::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 9px;
-  border-radius: 6px;
-  background: var(--ink);
-  color: var(--white);
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 120ms ease;
-}
-
-.textLinkDisabled:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
+/* The disabled "Manage listing" link and its tooltip moved with it, to
+   components/Footer.module.css. */
 
 .cta {
   display: inline-flex;

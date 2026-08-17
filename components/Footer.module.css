@@ -1,0 +1,75 @@
+.footer {
+  border-top: 1px solid var(--border);
+  background: var(--white);
+}
+
+.inner {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+
+.copyright {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+
+.link {
+  font-size: 12px;
+  color: var(--gray);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: var(--ink);
+}
+
+/* "Manage listing" until the Stripe portal exists: visible but inert. */
+.linkDisabled {
+  position: relative;
+  font-size: 12px;
+  color: var(--gray);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: default;
+  user-select: none;
+}
+
+.disabledLabel {
+  opacity: 0.45;
+}
+
+.linkDisabled::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease;
+}
+
+.linkDisabled:hover::after {
+  opacity: 1;
+  visibility: visible;
+}

@@ -2,21 +2,39 @@
 
 import { useState } from 'react';
 import FormPage, { FormHeading, Submitted } from '@/components/FormPage';
+import PhotoUploader, { usePhotoPicker } from '@/components/PhotoUploader';
 import Button from '@/components/ui/Button';
 import { Field, Textarea, TextInput } from '@/components/ui/Field';
 import Toast, { useToast, useRapidClickGuard } from '@/components/ui/Toast';
 import { LIMITS } from '@/lib/validation';
+import { normaliseReferenceId } from '@/lib/reference-id';
 import styles from './page.module.css';
 
+/** Server field names -> this form's own field names. */
+const SERVER_FIELD_MAP = {
+  reference_id: 'referenceId',
+  identifier: 'identifier',
+  request_details: 'change',
+  photos: 'photos',
+};
+
 export default function RequestChangePage() {
+  const [referenceId, setReferenceId] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [change, setChange] = useState('');
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [sent, setSent] = useState(false);
-  const { toast, showTooFast } = useToast();
+  const { toast, showToast, showTooFast } = useToast();
   const isRapidClicking = useRapidClickGuard();
+
+  // Same control as the intake form, with the lower cap change requests use.
+  const picker = usePhotoPicker({
+    max: LIMITS.changeRequestPhotoCount,
+    onLimitExceeded: (message) => showToast(message, 'red'),
+    onAdd: () => setErrors((prev) => ({ ...prev, photos: undefined })),
+  });
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -29,6 +47,7 @@ export default function RequestChangePage() {
     }
 
     const next = {};
+    if (!referenceId.trim()) next.referenceId = 'Enter the reference ID from your approval email.';
     if (!identifier.trim()) next.identifier = 'Tell us which listing this is.';
     if (!change.trim()) next.change = 'Describe the change you want.';
     setErrors(next);
@@ -38,16 +57,15 @@ export default function RequestChangePage() {
     setSubmitError(null);
 
     try {
-      // Server route validates, rate limits, inserts and notifies. The browser
-      // no longer writes to the database directly.
-      const res = await fetch('/api/change-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          identifier: identifier.trim(),
-          request_details: change.trim(),
-        }),
-      });
+      // Multipart so the photos travel with the fields. The server verifies the
+      // reference ID against the listing, validates and stores everything.
+      const body = new FormData();
+      body.set('reference_id', normaliseReferenceId(referenceId));
+      body.set('identifier', identifier.trim());
+      body.set('request_details', change.trim());
+      picker.photos.forEach((p) => body.append('photos', p.file, p.file.name));
+
+      const res = await fetch('/api/change-requests', { method: 'POST', body });
 
       if (res.status === 429) {
         showTooFast();
@@ -59,10 +77,11 @@ export default function RequestChangePage() {
 
       if (!res.ok) {
         if (payload.errors) {
-          setErrors({
-            identifier: payload.errors.identifier,
-            change: payload.errors.request_details,
-          });
+          const mapped = {};
+          for (const [field, message] of Object.entries(payload.errors)) {
+            mapped[SERVER_FIELD_MAP[field] ?? field] = message;
+          }
+          setErrors(mapped);
         }
         setSubmitError(payload.error || 'Could not send your request. Please try again.');
         setSubmitting(false);
@@ -95,6 +114,28 @@ export default function RequestChangePage() {
       />
 
       <form onSubmit={handleSubmit} noValidate>
+        <Field
+          label="Reference ID"
+          htmlFor="referenceId"
+          error={errors.referenceId}
+          helper="Sent to you by email when your listing was approved"
+        >
+          <TextInput
+            id="referenceId"
+            name="referenceId"
+            value={referenceId}
+            invalid={Boolean(errors.referenceId)}
+            // Typed in any case, stored and sent uppercase.
+            onChange={(e) => {
+              setReferenceId(normaliseReferenceId(e.target.value));
+              setErrors((prev) => ({ ...prev, referenceId: undefined }));
+            }}
+            placeholder="LR-4X9K2"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </Field>
+
         <Field
           label="Business name or email"
           htmlFor="identifier"
@@ -132,6 +173,23 @@ export default function RequestChangePage() {
               setErrors((prev) => ({ ...prev, change: undefined }));
             }}
             placeholder="e.g. update our phone number, change our description, swap our photo"
+          />
+        </Field>
+
+        <Field
+          label="Photos"
+          htmlFor="photos"
+          optional
+          error={errors.photos}
+          counter={
+            picker.photos.length > 0
+              ? `${picker.photos.length}/${LIMITS.changeRequestPhotoCount}`
+              : undefined
+          }
+        >
+          <PhotoUploader
+            picker={picker}
+            emptyHint={`Up to ${LIMITS.changeRequestPhotoCount}. Only if the change involves new pictures.`}
           />
         </Field>
 

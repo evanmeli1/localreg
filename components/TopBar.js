@@ -37,20 +37,8 @@ export default function TopBar({ query, onQueryChange }) {
         </div>
 
         <nav className={styles.actions}>
-          {/* TODO: replace with the Stripe Customer Portal URL once billing is
-              wired up — it's a generated session link, so there's nothing to
-              point at yet. Disabled rather than routed to a stub page. */}
-          <span
-            className={styles.textLinkDisabled}
-            aria-disabled="true"
-            data-tooltip="Coming soon"
-          >
-            {/* Only the label is faded — the tooltip would inherit the opacity
-                if it hung off the same element. */}
-            <span className={styles.disabledLabel}>Manage listing</span>
-          </span>
-
-          {/* Opens Stripe Checkout; /welcome is reached only after payment. */}
+          {/* "Manage listing" lives in the footer now — see components/Footer.js.
+              Opens Stripe Checkout; /welcome is reached only after payment. */}
           <ListYourBusinessButton />
         </nav>
       </div>
