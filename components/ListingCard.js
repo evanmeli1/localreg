@@ -9,9 +9,14 @@ import styles from './ListingCard.module.css';
 export default function ListingCard({ listing, index = 0 }) {
   const category = getCategory(listing.categoryId);
 
+  // Uploaded photo when there is one, otherwise the rotating gradient.
+  const coverStyle = listing.photoUrl
+    ? { backgroundImage: `url(${listing.photoUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : { background: gradientFor(index) };
+
   return (
     <Link href={`/listing/${listing.id}`} className={styles.card}>
-      <div className={styles.cover} style={{ background: gradientFor(index) }}>
+      <div className={styles.cover} style={coverStyle}>
         {listing.status === 'live' && (
           <span className={styles.badge}>
             <IconCheck size={11} stroke={3} />

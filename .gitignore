@@ -3,4 +3,10 @@ node_modules/
 out/
 .DS_Store
 *.log
+
+# Env files. `.env` is ignored too — it holds SUPABASE_SERVICE_ROLE_KEY, which
+# bypasses RLS entirely and must never reach the repo. Only the example is tracked.
+.env
 .env*.local
+.env.*
+!.env.example

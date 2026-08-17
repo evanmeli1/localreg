@@ -89,3 +89,44 @@
 .cta {
   margin-top: 20px;
 }
+
+/* Not-found / failed-load state */
+.missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 52px 24px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+
+.missingTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.missingText {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gray);
+}
+
+.missingCta {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.missingCta:hover {
+  opacity: 0.7;
+}

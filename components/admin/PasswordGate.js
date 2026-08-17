@@ -6,22 +6,45 @@ import Button from '@/components/ui/Button';
 import { Field, TextInput } from '@/components/ui/Field';
 import styles from './PasswordGate.module.css';
 
-// TODO: placeholder only. Replace with real auth (Supabase session + a server-
-// side role check) before production — this constant ships to the browser and
-// gates nothing that an attacker couldn't bypass by editing client state.
-const ADMIN_PASSWORD = 'localreg';
+// The password itself lives in the ADMIN_PASSWORD env var and is checked
+// server-side by /api/admin/auth, so it never reaches the client bundle.
+//
+// ⚠️ Still a placeholder: there is no session, so the password is held in
+// memory and replayed on every admin request. Replace with real session-based
+// auth before launch — see the note in lib/admin-api.js.
 
 export default function PasswordGate({ onUnlock }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      onUnlock();
-      return;
+    if (checking) return;
+
+    setChecking(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        onUnlock(password);
+        return;
+      }
+
+      const body = await res.json().catch(() => ({}));
+      setError(body.error || 'Incorrect password.');
+    } catch (err) {
+      console.error('[admin] auth request failed', err);
+      setError('Could not reach the server. Please try again.');
     }
-    setError('Incorrect password.');
+
+    setChecking(false);
   }
 
   return (
@@ -51,8 +74,8 @@ export default function PasswordGate({ onUnlock }) {
             />
           </Field>
 
-          <Button type="submit" size="lg" fullWidth>
-            Enter
+          <Button type="submit" size="lg" fullWidth disabled={checking}>
+            {checking ? 'Checking…' : 'Enter'}
           </Button>
         </div>
       </form>

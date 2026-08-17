@@ -9,10 +9,11 @@ import styles from './DevNav.module.css';
 // TEMPORARY dev-only route menu. Nothing links to /welcome, /admin, or
 // /request-change yet — Stripe and Supabase provide those entry points later.
 // Delete this component (and its mount in app/layout.js) before launch.
+// Listing detail is reached by clicking a card — ids are database uuids now,
+// so there's no static URL to link here.
 const ROUTES = [
   { href: '/', label: 'Directory' },
-  { href: '/listing/nook-and-cranny-coffee', label: 'Listing detail' },
-  { href: '/welcome', label: 'Welcome / intake' },
+  { href: '/welcome?session_id=test123', label: 'Welcome / intake' },
   { href: '/admin', label: 'Admin queue' },
   { href: '/request-change', label: 'Change request' },
 ];

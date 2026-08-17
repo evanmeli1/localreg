@@ -4,16 +4,20 @@ import { useState } from 'react';
 import FormPage, { FormHeading, Submitted } from '@/components/FormPage';
 import Button from '@/components/ui/Button';
 import { Field, Textarea, TextInput } from '@/components/ui/Field';
+import { supabase, isSupabaseConfigured, describeError } from '@/lib/supabase';
 import styles from './page.module.css';
 
 export default function RequestChangePage() {
   const [identifier, setIdentifier] = useState('');
   const [change, setChange] = useState('');
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [sent, setSent] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (submitting) return;
 
     const next = {};
     if (!identifier.trim()) next.identifier = 'Tell us which listing this is.';
@@ -21,7 +25,26 @@ export default function RequestChangePage() {
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
-    // No API yet — same client-side confirmation pattern as the intake form.
+    if (!isSupabaseConfigured) {
+      setSubmitError('The database is not configured yet. Please try again later.');
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    // change_requests is insert-only for anon under RLS — nothing is read back.
+    const { error } = await supabase.from('change_requests').insert({
+      identifier: identifier.trim(),
+      request_details: change.trim(),
+    });
+
+    if (error) {
+      setSubmitError(describeError(error, 'Could not send your request. Please try again.'));
+      setSubmitting(false);
+      return;
+    }
+
     setSent(true);
   }
 
@@ -81,8 +104,16 @@ export default function RequestChangePage() {
           />
         </Field>
 
-        <Button type="submit" size="lg" fullWidth className={styles.submit}>
-          Send request
+        {submitError && <p className={styles.submitError}>{submitError}</p>}
+
+        <Button
+          type="submit"
+          size="lg"
+          fullWidth
+          className={styles.submit}
+          disabled={submitting}
+        >
+          {submitting ? 'Sending…' : 'Send request'}
         </Button>
       </form>
     </FormPage>

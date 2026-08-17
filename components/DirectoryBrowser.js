@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CategoryRow from './CategoryRow';
 import ListingGrid from './ListingGrid';
 import SubcategoryChips, { ALL } from './SubcategoryChips';
 import TopBar from './TopBar';
 import { getCategory } from '@/lib/categories';
-import { LISTINGS } from '@/lib/listings';
+import { fetchLiveListings } from '@/lib/businesses';
 import styles from './DirectoryBrowser.module.css';
 
 export default function DirectoryBrowser() {
@@ -20,6 +20,25 @@ export default function DirectoryBrowser() {
   const [subcategory, setSubcategory] = useState(ALL);
   const [query, setQuery] = useState('');
 
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchLiveListings().then(({ listings: rows, error }) => {
+      if (cancelled) return;
+      setListings(rows);
+      setLoadError(error);
+      setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const category = getCategory(categoryId);
 
   function handleSelectCategory(nextId) {
@@ -31,7 +50,7 @@ export default function DirectoryBrowser() {
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    return LISTINGS.filter((listing) => {
+    return listings.filter((listing) => {
       if (categoryId && listing.categoryId !== categoryId) return false;
       if (subcategory !== ALL && listing.subcategory !== subcategory) {
         return false;
@@ -39,18 +58,13 @@ export default function DirectoryBrowser() {
       if (!q) return true;
 
       const cat = getCategory(listing.categoryId);
-      const haystack = [
-        listing.name,
-        listing.subcategory,
-        listing.city,
-        cat ? cat.label : '',
-      ]
+      const haystack = [listing.name, listing.subcategory, cat ? cat.label : '']
         .join(' ')
         .toLowerCase();
 
       return haystack.includes(q);
     });
-  }, [categoryId, subcategory, query]);
+  }, [listings, categoryId, subcategory, query]);
 
   const heading = query.trim()
     ? `Results for "${query.trim()}"`
@@ -77,7 +91,15 @@ export default function DirectoryBrowser() {
           </div>
         )}
 
-        <ListingGrid heading={heading} listings={visible} />
+        <ListingGrid
+          heading={heading}
+          listings={visible}
+          loading={loading}
+          error={loadError}
+          // Distinguishes "nothing matches your filter" from "the directory is
+          // empty" — right after launch every visitor hits the latter.
+          directoryEmpty={listings.length === 0}
+        />
       </main>
     </>
   );

@@ -90,6 +90,34 @@
   color: var(--gray);
 }
 
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 40px 24px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+
+.errorTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.errorText {
+  margin: 0 0 12px;
+  max-width: 44ch;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--gray);
+}
+
 .toast {
   position: fixed;
   left: 50%;
