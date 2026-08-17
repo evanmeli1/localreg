@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient, isAdminConfigured } from '@/lib/supabase-admin';
+import { getCategory } from '@/lib/categories';
+import { COLORS, DISCORD_WEBHOOKS, notifyDiscord } from '@/lib/discord';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +39,7 @@ export async function POST(request) {
   // used to fill the table with junk rows.
   const { data: business, error: lookupError } = await client
     .from('businesses')
-    .select('id, stripe_customer_id')
+    .select('id, name, category, subcategory, contact_email, stripe_customer_id')
     .eq('id', businessId)
     .maybeSingle();
 
@@ -60,6 +62,24 @@ export async function POST(request) {
     console.error('[events] insert failed', error);
     return NextResponse.json({ error: 'Could not record the event.' }, { status: 500 });
   }
+
+  // Notify the signups channel. Every value comes from the row we just read
+  // back, never from the request body, so the message can't be spoofed.
+  // Awaited so the serverless invocation isn't torn down mid-request, but a
+  // failure inside notifyDiscord is swallowed and never fails the submission.
+  const category = getCategory(business.category);
+  await notifyDiscord(DISCORD_WEBHOOKS.signups, {
+    title: '📋 New submission pending approval',
+    color: COLORS.gray,
+    fields: [
+      { name: 'Business name', value: business.name },
+      {
+        name: 'Category / Subcategory',
+        value: `${category ? category.label : business.category} / ${business.subcategory}`,
+      },
+      { name: 'Contact email', value: business.contact_email },
+    ],
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -33,8 +33,12 @@ export default function RequestChangePage() {
     setSubmitting(true);
     setSubmitError(null);
 
-    // change_requests is insert-only for anon under RLS — nothing is read back.
+    // change_requests is insert-only for anon under RLS — nothing is read back,
+    // so the id is generated here (a RETURNING clause would be blocked).
+    const requestId = crypto.randomUUID();
+
     const { error } = await supabase.from('change_requests').insert({
+      id: requestId,
       identifier: identifier.trim(),
       request_details: change.trim(),
     });
@@ -44,6 +48,16 @@ export default function RequestChangePage() {
       setSubmitting(false);
       return;
     }
+
+    // Discord notification. The webhook URL is a server-side secret, so this
+    // goes through an API route, which rebuilds the message from the stored
+    // row. Best-effort: a failed notification must not cost the user their
+    // request, so it is logged and swallowed.
+    fetch('/api/notify/change-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: requestId }),
+    }).catch((err) => console.error('[request-change] notification failed', err));
 
     setSent(true);
   }
