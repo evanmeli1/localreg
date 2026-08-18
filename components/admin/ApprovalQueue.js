@@ -18,7 +18,6 @@ export default function ApprovalQueue() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [loggingOut, setLoggingOut] = useState(false);
   // Shared toast implementation — see components/ui/Toast.js.
   const { toast, showToast, showTooFast } = useToast();
 
@@ -54,20 +53,6 @@ export default function ApprovalQueue() {
   useEffect(() => {
     load();
   }, [load]);
-
-  async function logout() {
-    if (loggingOut) return;
-    setLoggingOut(true);
-    try {
-      await fetch('/api/admin/logout', { method: 'POST' });
-    } catch (err) {
-      console.error('[admin] logout failed', err);
-    }
-    // Refresh either way: if the cookie did clear, the server component now
-    // renders the login form.
-    router.refresh();
-    setLoggingOut(false);
-  }
 
   async function decide(submission, decision) {
     if (busyId) return;
@@ -115,17 +100,13 @@ export default function ApprovalQueue() {
     setBusyId(null);
   }
 
+  // The page shell, heading and log-out live in AdminDashboard now, so this
+  // renders only the queue itself.
   return (
-    <main className={styles.shell}>
+    <section className={styles.panel}>
       <div className={styles.head}>
-        <h1 className={styles.heading}>Pending approvals</h1>
+        <h2 className={styles.heading}>Pending approvals</h2>
         {!loading && !loadError && <Badge variant="count">{pending.length}</Badge>}
-
-        <div className={styles.headActions}>
-          <Button variant="quiet" onClick={logout} disabled={loggingOut}>
-            {loggingOut ? 'Logging out…' : 'Log out'}
-          </Button>
-        </div>
       </div>
 
       {loading ? (
@@ -139,7 +120,7 @@ export default function ApprovalQueue() {
           </Button>
         </div>
       ) : pending.length === 0 ? (
-        <p className={styles.empty}>Queue is clear — nothing waiting on review.</p>
+        <p className={styles.empty}>Queue is clear. Nothing waiting on review.</p>
       ) : (
         <div className={styles.list}>
           {pending.map((submission) => {
@@ -185,6 +166,6 @@ export default function ApprovalQueue() {
       )}
 
       <Toast toast={toast} />
-    </main>
+    </section>
   );
 }

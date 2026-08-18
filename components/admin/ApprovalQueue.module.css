@@ -1,7 +1,6 @@
-.shell {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 26px 20px 80px;
+/* The page shell moved to AdminDashboard; this is just the panel inside it. */
+.panel {
+  padding-top: 22px;
 }
 
 .head {

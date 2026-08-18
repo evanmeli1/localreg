@@ -1,0 +1,144 @@
+.panel {
+  padding-top: 22px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--gray);
+  cursor: pointer;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.row {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--white);
+}
+
+/* Handled ones stay readable but visibly recede. */
+.rowResolved {
+  opacity: 0.62;
+}
+
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.business {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.date {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.details {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  /* Owner-written text: preserve their line breaks, and break long unbroken
+     strings rather than letting them widen the card. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.submitted {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.identifier {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.photoLink {
+  display: block;
+  line-height: 0;
+}
+
+.photo {
+  width: 78px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.empty {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.errorBox {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--red);
+  border-radius: var(--radius-card);
+  background: var(--white);
+}
+
+.errorTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.errorText {
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: var(--gray);
+}

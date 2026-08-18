@@ -1,0 +1,220 @@
+.panel {
+  padding-top: 22px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--white);
+}
+
+.rowMain {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.description {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--gray);
+  overflow-wrap: anywhere;
+}
+
+.photoCount {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--gray);
+}
+
+.rowActions {
+  flex: none;
+}
+
+/* ---- edit form ---------------------------------------------------------- */
+.editCard {
+  padding: 18px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-card);
+  background: var(--white);
+}
+
+.editHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.editTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.ref {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+/* Category and subcategory belong together, so they sit on one row until
+   there is no longer space for two columns. */
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 620px) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.photoBlock {
+  margin-bottom: 14px;
+}
+
+.photoLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.photoGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photoItem {
+  position: relative;
+  width: 84px;
+}
+
+.photoThumb {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: block;
+}
+
+.removePhoto {
+  width: 100%;
+  margin-top: 4px;
+  padding: 3px 0;
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.removePhoto:hover {
+  background: var(--field);
+}
+
+.photoNote {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--gray);
+}
+
+.photoError {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--red);
+}
+
+.formError {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.errorBox {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--red);
+  border-radius: var(--radius-card);
+  background: var(--white);
+}
+
+.errorTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.errorText {
+  margin: 4px 0 12px;
+  font-size: 12px;
+  color: var(--gray);
+}
