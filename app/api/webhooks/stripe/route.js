@@ -203,11 +203,11 @@ async function handleDisputeCreated(event, supabase) {
   // claim, not a finding — it can be resolved in our favour, and pulling a
   // paying customer's listing on an unproven claim is the worse error.
   await notifyDiscord(DISCORD_WEBHOOKS.alerts, {
-    title: '⚠️ DISPUTE OPENED — needs immediate attention',
+    title: '⚠️ DISPUTE OPENED, needs immediate attention',
     description:
       '**This is the most urgent alert type.** A cardholder has disputed a charge. '
       + 'Respond in the Stripe Dashboard before the evidence deadline or the funds are lost by default.\n\n'
-      + 'The listing has been left live on purpose — a dispute is a claim, not proof.',
+      + 'The listing has been left live on purpose, because a dispute is a claim, not proof.',
     color: COLORS.red,
     fields: [
       { name: 'Business name', value: business?.name ?? '⚠️ no matching listing found' },

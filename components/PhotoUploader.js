@@ -41,7 +41,7 @@ export function usePhotoPicker({ max, onLimitExceeded, onAdd }) {
         return prev;
       }
       if (incoming.length > room) {
-        onLimitExceeded?.(`Only ${max} photos allowed — extras were skipped.`);
+        onLimitExceeded?.(`Only ${max} photos allowed, so extras were skipped.`);
       }
 
       const added = incoming.slice(0, room).map((file) => {

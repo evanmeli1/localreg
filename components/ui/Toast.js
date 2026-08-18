@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './Toast.module.css';
 
-export const TOO_FAST_MESSAGE = "You're doing that too fast — please wait a moment and try again.";
+export const TOO_FAST_MESSAGE = "You're doing that too fast. Please wait a moment and try again.";
 
 /**
  * The single toast implementation, shared by the admin queue's approve/reject

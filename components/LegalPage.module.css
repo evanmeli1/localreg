@@ -1,0 +1,99 @@
+.shell {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 80px;
+}
+
+/* Same card as FormPage, widened for prose — see the note in LegalPage.js. */
+.card {
+  width: 100%;
+  max-width: 720px;
+  padding: 32px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+.head {
+  padding-bottom: 20px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.heading {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.updated {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.intro {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.section {
+  padding-top: 24px;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* Paragraphs and lists are styled by tag so the page bodies stay plain
+   readable JSX instead of carrying a class on every line. */
+.section p {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.section p:last-child {
+  margin-bottom: 0;
+}
+
+.section ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.section li {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.section a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.section strong {
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .card {
+    padding: 22px 18px;
+  }
+
+  .heading {
+    font-size: 22px;
+  }
+}

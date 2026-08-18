@@ -100,7 +100,7 @@ export default function RequestChangePage() {
     return (
       <FormPage>
         <Submitted title="Request sent">
-          Got it — we&apos;ll make the update and follow up if we have questions.
+          Got it. We&apos;ll make the update and follow up if we have questions.
         </Submitted>
       </FormPage>
     );

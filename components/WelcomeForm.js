@@ -202,7 +202,7 @@ export default function WelcomeForm() {
     return (
       <FormPage>
         <Submitted title="You're all set">
-          We&apos;re reviewing your listing — you&apos;ll get an email at{' '}
+          We&apos;re reviewing your listing. You&apos;ll get an email at{' '}
           <strong>{submittedEmail}</strong> once it&apos;s approved.
         </Submitted>
       </FormPage>
@@ -274,7 +274,7 @@ export default function WelcomeForm() {
           </span>
           <h1 className={styles.gateHeading}>We couldn&apos;t check your payment</h1>
           <p className={styles.gateText}>
-            Something went wrong on our end — your payment is safe. Please
+            Something went wrong on our end, but your payment is safe. Please
             refresh in a moment, and email us if it keeps happening.
           </p>
           <Button href="/" variant="quiet" className={styles.gateCta}>
