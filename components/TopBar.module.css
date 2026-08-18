@@ -1,9 +1,12 @@
+/* Ruby, with no bottom border: on the homepage the promo banner sits directly
+   beneath in the same colour, and a light divider would cut the block in two.
+   Scrolled away from the top, the ruby bar separates itself from the light
+   page beneath by contrast alone. */
 .bar {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
+  background: var(--ruby);
 }
 
 .inner {
@@ -25,19 +28,24 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--ink);
+  color: var(--white);
   flex: none;
 }
 
+/* A translucent white wash rather than --field, which would be a pale blob
+   against ruby. */
 .menu:hover {
-  background: var(--field);
+  background: rgba(255, 255, 255, 0.16);
 }
 
+/* 24px/900 with tight tracking. The negative letter-spacing is doing real work
+   here: at this weight Inter's glyphs are wide enough that default tracking
+   reads as separate heavy letters rather than one solid wordmark. */
 .logo {
-  font-size: 19px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--ink);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  color: var(--white);
   flex: none;
   margin-right: 4px;
 }
@@ -89,21 +97,5 @@
 }
 
 /* The disabled "Manage listing" link and its tooltip moved with it, to
-   components/Footer.module.css. */
-
-.cta {
-  display: inline-flex;
-  align-items: center;
-  height: 36px;
-  padding: 0 18px;
-  border-radius: var(--radius-pill);
-  background: var(--ink);
-  color: var(--white);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.cta:hover {
-  opacity: 0.88;
-}
+   components/Footer.module.css. The old .cta rule went too — the button is a
+   component now and styles itself in ListYourBusinessButton.module.css. */

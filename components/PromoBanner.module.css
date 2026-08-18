@@ -1,0 +1,184 @@
+/* --ruby / --ruby-deep now live in globals.css: the top bar shares this exact
+   colour so the two form one block, which makes it a palette token rather than
+   something private to this component. */
+.banner {
+  position: relative;
+  /* Clips the torn-paper artwork to the banner's edge. Safe for the toast and
+     the modal, which are position: fixed and so escape this box. */
+  overflow: hidden;
+  /* Full-bleed: no radius, no margin, flush under the top bar so the two read
+     as one block. The gap below comes from the shell's own padding. */
+  border-radius: 0;
+  background: var(--ruby);
+  color: var(--white);
+}
+
+/* The ruby runs edge to edge, but the copy stays on the same column as the
+   category row beneath it — matching the shell's max-width and 20px gutters.
+   Without this the headline would drift to the far left on wide screens while
+   everything below stayed centred. */
+.inner {
+  position: relative;
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  /* Keeps the copy clear of the artwork on mid-width screens. */
+  max-width: 620px;
+}
+
+.headline {
+  margin: 0;
+  font-size: 28px;
+  /* Black, matching the wordmark. Inter has a true 900, so this is a real
+     step up from 800 rather than the same face under a different number. */
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+/* The superseded price sits to the RIGHT of the live one, small and knocked
+   back, so the eye lands on $5/mo first and reads $9.99 as a footnote. Muted
+   via white alpha rather than --gray, which would go muddy against the ruby. */
+.formerPrice {
+  margin-left: 10px;
+  font-size: 0.5em;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0;
+  vertical-align: 0.32em;
+  text-decoration-thickness: 1.5px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+/* Same pill language as the top bar CTA, inverted for the ruby ground. */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 22px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--ruby-deep);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  transition: opacity 120ms ease;
+}
+
+.cta:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.cta:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* A button that reads as a link — it opens the pricing modal in place. */
+.terms {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.85;
+  transition: opacity 120ms ease;
+}
+
+.terms:hover {
+  opacity: 1;
+}
+
+/* Matches the top bar CTA's error treatment — a white card rather than more
+   white-on-ruby text, so a failure reads as an alert instead of body copy. */
+.error {
+  display: inline-block;
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  max-width: 380px;
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.decoration {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 170px;
+  pointer-events: none;
+}
+
+/* Low opacities keep the artwork as texture — it should never compete with
+   the headline for attention. */
+.sheetBack {
+  fill: var(--white);
+  opacity: 0.07;
+}
+
+.sheetMid {
+  fill: var(--white);
+  opacity: 0.11;
+}
+
+.sheetFront {
+  fill: var(--white);
+  opacity: 0.16;
+}
+
+.badgeCircle {
+  fill: var(--red);
+}
+
+.badgeMark {
+  fill: var(--white);
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* Below this width the artwork would sit under the copy, so it goes and the
+   banner tightens up. */
+@media (max-width: 720px) {
+  /* Padding lives on .inner now that the banner itself is full-bleed. The 20px
+     gutter is unchanged, so the copy still lines up with the content below. */
+  .inner {
+    padding: 24px 20px;
+  }
+
+  .headline {
+    font-size: 22px;
+  }
+
+  .decoration {
+    display: none;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+}

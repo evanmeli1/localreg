@@ -8,6 +8,12 @@
   /* Link blue — borrowed from the Auto category ink so the palette stays closed. */
   --link: #1d4ed8;
 
+  /* Ruby: the top bar and the promo banner share one continuous block of it,
+     so it lives here rather than scoped to either component. --ruby-deep is
+     the text colour used on white pills sitting on that ruby. */
+  --ruby: #9a1b2f;
+  --ruby-deep: #6d1220;
+
   --border: #efefef;
   --border-input: #e0e0e0;
   --border-chip: #e5e5e5;
@@ -35,8 +41,10 @@ body {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Helvetica, Arial, sans-serif;
+  /* --font-inter is the self-hosted variable Inter loaded in app/layout.js.
+     The rest stay as fallbacks for the moment before it swaps in. */
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.45;

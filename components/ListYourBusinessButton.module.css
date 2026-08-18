@@ -3,30 +3,42 @@
   flex: none;
 }
 
-/* Matches the pill CTA the top bar used when this was a plain link. */
+/* Plain bold text, not a button shape: the ruby bar already carries the promo
+   banner's white pill directly below it, and two pills stacked made the header
+   read as two competing CTAs. This one is a text link that happens to open
+   Checkout, so it keeps <button> semantics (it triggers an action, not
+   navigation) with every button affordance stripped off.
+   Weight matches the wordmark. */
 .cta {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  height: 36px;
-  padding: 0 18px;
+  padding: 0;
   border: none;
-  border-radius: var(--radius-pill);
-  background: var(--ink);
+  background: none;
   color: var(--white);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.015em;
   white-space: nowrap;
   transition: opacity 120ms ease;
 }
 
 .cta:hover:not(:disabled) {
-  opacity: 0.88;
+  opacity: 0.78;
 }
 
 .cta:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+
+/* 16px is a desktop size. At phone widths the bar runs hamburger + 24px
+   wordmark + search + this label, and 16px pushes the last letters past the
+   right edge, so it steps down rather than being clipped. */
+@media (max-width: 600px) {
+  .cta {
+    font-size: 13px;
+  }
 }
 
 /* Floats beneath the bar so adding an error never shifts the layout. */

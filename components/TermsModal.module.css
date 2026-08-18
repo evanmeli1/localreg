@@ -1,0 +1,101 @@
+.title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.sections {
+  margin: 0;
+  padding: 0;
+}
+
+/* Rule between sections, not above the first or below the last. */
+.section {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 20px;
+}
+
+.label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.value {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Superseded price: smaller and gray so the live price stays the prominent one. */
+.formerPrice {
+  color: var(--gray);
+  font-size: 0.85em;
+  font-weight: 500;
+  text-decoration-thickness: 1.5px;
+}
+
+.inlineLink {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.primary {
+  display: block;
+  width: 100%;
+  height: 46px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 120ms ease;
+}
+
+.primary:hover {
+  opacity: 0.88;
+}
+
+/* Text link rather than a second button, so it reads as the quieter option. */
+.secondary {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 120ms ease;
+}
+
+.secondary:hover:not(:disabled) {
+  opacity: 0.7;
+}
+
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.error {
+  margin: 12px 0 0;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}

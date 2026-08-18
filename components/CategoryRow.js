@@ -11,7 +11,8 @@ import {
 import { CATEGORIES } from '@/lib/categories';
 import styles from './CategoryRow.module.css';
 
-const ICONS = {
+/** Shared with NavDrawer so both render a category with the same icon. */
+export const CATEGORY_ICONS = {
   coffee: IconCoffee,
   car: IconCar,
   bag: IconShoppingBag,
@@ -24,7 +25,7 @@ export default function CategoryRow({ selectedId, onSelect }) {
   return (
     <div className={`${styles.row} scroll-x`}>
       {CATEGORIES.map((cat) => {
-        const Icon = ICONS[cat.icon];
+        const Icon = CATEGORY_ICONS[cat.icon];
         const selected = cat.id === selectedId;
 
         return (

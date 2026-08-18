@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CategoryRow from './CategoryRow';
 import ListingGrid from './ListingGrid';
+import PromoBanner from './PromoBanner';
 import SubcategoryChips, { ALL } from './SubcategoryChips';
 import TopBar from './TopBar';
 import { getCategory } from '@/lib/categories';
@@ -14,11 +15,22 @@ export default function DirectoryBrowser() {
   // ?category=auto preselects a category — that's how the listing detail page's
   // "← Back to Auto" link returns you to where you were.
   const searchParams = useSearchParams();
-  const initialCategory = getCategory(searchParams.get('category'))?.id ?? null;
+  const categoryParam = searchParams.get('category');
+  const initialCategory = getCategory(categoryParam)?.id ?? null;
 
   const [categoryId, setCategoryId] = useState(initialCategory);
   const [subcategory, setSubcategory] = useState(ALL);
   const [query, setQuery] = useState('');
+
+  // The nav drawer links to /?category=<id> from a page that is already
+  // mounted, so the initial useState value above is not enough — without this
+  // the URL would change and the grid would not. Keyed on the param alone, so
+  // picking a category from CategoryRow (which leaves the URL untouched) does
+  // not get clobbered.
+  useEffect(() => {
+    setCategoryId(getCategory(categoryParam)?.id ?? null);
+    setSubcategory(ALL);
+  }, [categoryParam]);
 
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +98,9 @@ export default function DirectoryBrowser() {
   return (
     <>
       <TopBar query={query} onQueryChange={setQuery} />
+
+      {/* Outside the shell so it can run edge to edge, flush under the bar. */}
+      <PromoBanner />
 
       <main className={styles.shell}>
         <CategoryRow selectedId={categoryId} onSelect={handleSelectCategory} />
