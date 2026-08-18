@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { getAdminClient, isAdminConfigured } from '@/lib/supabase-admin';
+import { RATE_LIMITS, getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,23 @@ export const dynamic = 'force-dynamic';
 export async function POST(request) {
   if (!isStripeConfigured || !isAdminConfigured) {
     return NextResponse.json({ status: 'unavailable' });
+  }
+
+  // Unauthenticated, and it spends a Stripe API call on anything shaped like a
+  // session id, so it needs the same friction as the other public routes.
+  // Answers in the documented { status } shape rather than the shared 429 body:
+  // WelcomeForm switches on `status`, and an { error } payload would fall
+  // through to its "no completed payment" gate, which would be a lie.
+  const { limited, retryAfterSeconds } = rateLimit(
+    'checkoutVerify',
+    getClientIp(request),
+    RATE_LIMITS.checkoutVerify,
+  );
+  if (limited) {
+    return NextResponse.json(
+      { status: 'unavailable' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } },
+    );
   }
 
   let body;
